@@ -1,39 +1,43 @@
 import soundcard as sc
 import soundfile as sf
 import pyperclip
-import keyboard
 import os
-import urllib.parse
+from pynput import keyboard
 
 SAMPLE_RATE = 48000
 OUTPUT_FILE_NAME = "out.wav"
 is_recording = False
 
-while True:
-    with sc.get_microphone(id = str(sc.default_speaker().name),
-                        include_loopback = True).recorder(samplerate = SAMPLE_RATE) as mic:
-
-        data = []
-
-        if keyboard.is_pressed('f3'):
+def on_press(key):
+    global is_recording
+    try:
+        if key == keyboard.Key.f3:
             is_recording = not is_recording
-            print("Starting...")
+            print("Starting..." if is_recording else "Stopping...")
+    except AttributeError:
+        pass
 
-        while is_recording:
-            
-            new_data = mic.record(numframes = int(SAMPLE_RATE * 0.1))
-            data.extend(new_data[:, 0].tolist())
+with keyboard.Listener(on_press = on_press) as listener:
+    while True:
+        with sc.get_microphone(id = str(sc.default_speaker().name),
+                            include_loopback = True).recorder(samplerate = SAMPLE_RATE) as mic:
 
-            if keyboard.is_pressed('f3'):
-                is_recording = not is_recording
-                sf.write(file = OUTPUT_FILE_NAME, data = data, samplerate = SAMPLE_RATE)
+            data = []
 
-                print("Stopped...")
-                print("Copying to clipboard...")
+            while is_recording:
+                
+                new_data = mic.record(numframes = int(SAMPLE_RATE * 0.1))
+                data.extend(new_data[:, 0].tolist())
 
-                file_path = os.path.abspath("out.wav")
-                normalized_path = os.path.normpath(file_path)
-                anki_path = f'file:///{normalized_path}'
-                pyperclip.copy(anki_path)
+                if not is_recording:
 
-                print("Copied.")
+                    sf.write(file = OUTPUT_FILE_NAME, data = data, samplerate = SAMPLE_RATE)
+
+                    print("Copying to clipboard...")
+
+                    file_path = os.path.abspath("out.wav")
+                    normalized_path = os.path.normpath(file_path)
+                    anki_path = f'file:///{normalized_path}'
+                    pyperclip.copy(anki_path)
+
+                    print("Copied.")
