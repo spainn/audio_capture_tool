@@ -3,26 +3,11 @@ import soundfile as sf
 import pyperclip
 import keyboard
 import os
+import urllib.parse
 
-output_file_name = "out.wav"
 SAMPLE_RATE = 48000
-SECONDS = 5
+OUTPUT_FILE_NAME = "out.wav"
 is_recording = False
-
-# print("Starting recording...", end="")
-# with sc.get_microphone(id = str(sc.default_speaker().name),
-#                        include_loopback = True).recorder(samplerate = SAMPLE_RATE) as mic:
-#     data = mic.record(numframes = SAMPLE_RATE * SECONDS)
-#     print("Finished.")
-
-#     sf.write(file = output_file_name, data = data[:, 0], samplerate = SAMPLE_RATE)
-
-# file_path = os.path.abspath("out.wav")
-# file_url = f'file://{file_path.replace(" ", "%20")}'
-
-# # copy the file URL to the clipboard
-# pyperclip.copy(file_url)
-# print(f"File URL copied to clipboard: {file_url}")
 
 while True:
     with sc.get_microphone(id = str(sc.default_speaker().name),
@@ -30,7 +15,7 @@ while True:
 
         data = []
 
-        if keyboard.is_pressed('f2'):
+        if keyboard.is_pressed('f3'):
             is_recording = not is_recording
             print("Starting...")
 
@@ -38,10 +23,17 @@ while True:
             
             new_data = mic.record(numframes = int(SAMPLE_RATE * 0.1))
             data.extend(new_data[:, 0].tolist())
-            #for i in data: big_data.append(i)
 
-            if keyboard.is_pressed('f2'):
+            if keyboard.is_pressed('f3'):
                 is_recording = not is_recording
-                sf.write(file = output_file_name, data = data, samplerate = SAMPLE_RATE)
+                sf.write(file = OUTPUT_FILE_NAME, data = data, samplerate = SAMPLE_RATE)
+
                 print("Stopped...")
-                
+                print("Copying to clipboard...")
+
+                file_path = os.path.abspath("out.wav")
+                normalized_path = os.path.normpath(file_path)
+                anki_path = f'file:///{normalized_path}'
+                pyperclip.copy(anki_path)
+
+                print("Copied.")
